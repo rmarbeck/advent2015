@@ -21,9 +21,6 @@ val loggerAOCPart2 = Logger("aoc.part2")
 object Solver:
   def runOn(inputLines: Seq[String]): (String, String) =
 
-    //println((0 to Int.MaxValue).takeWhile(index => MD5.hash(inputLines.head + index.toString).take(5) != "00000" ).last + 1)
-    //println((0 to Int.MaxValue).takeWhile(index => MD5.hash(inputLines.head + index.toString).take(6) != "000000").last + 1)
-
     val (resultPart1: Int, resultPart2: Int) =
       startsWith(6, inputLines.head).foldLeft((0, 0)):
         case (acc, value) => value == 5 match
@@ -49,15 +46,8 @@ end Solver
 
 def startsWith(numberOfZeros: Int, key: String, index: Int = 0): LazyList[Int] =
   val computed = MD5.hash(key + index.toString).take(numberOfZeros)
-  computed.take(numberOfZeros) == "0"*numberOfZeros match
-    case true => LazyList.empty
-    case false => LazyList.cons(computed.indexWhere(_ != '0'), startsWith(numberOfZeros, key, index+1))
-
-
-def startsWith2(numberOfZeros: Int, key: String, index: Int = 0): LazyList[Int] =
-  val computed = MD5.hash(key + index.toString).take(numberOfZeros)
   computed.indexWhere(_ != '0') match
-    case value if value == numberOfZeros => LazyList.empty
+    case -1 => LazyList.empty
     case value => LazyList.cons(value, startsWith(numberOfZeros, key, index+1))
 
 
