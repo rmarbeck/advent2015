@@ -21,23 +21,20 @@ val loggerAOCPart2 = Logger("aoc.part2")
 object Solver:
   def runOn(inputLines: Seq[String]): (String, String) =
 
-    val resultPart1 = calc(inputLines.head)/*.map(Direction.from).foldLeft((Set(Position(0,0)), Position(0,0))):
-      case (acc, newDirection) =>
-        val newPosition = acc._2.move(newDirection)
-        (acc._1 + newPosition, newPosition)*/
+    val resultPart1 = calc(inputLines.head)
 
-    //val (odd: List[String], even: List[String]) = inputLines.head.grouped(2)
+    val (odd, even) = inputLines.head.grouped(2).foldLeft(("", "")):
+      case (acc, duo) => (acc._1 + duo.head, acc._2 + duo.last)
 
-    val resultPart2 = calc(inputLines.head.grouped(2).toList:_*)
+    val resultPart2 = calc(odd, even)
 
-     /* case (acc, newDirection) =>
-        val newPosition = acc._2.move(newDirection)
-        (acc._1 + newPosition, newPosition)
+    /*
+    val alternative = inputLines.head.grouped(2).foldLeft(("", "")):
+      case (acc, duo) => (acc._1 + duo.head, acc._2 + duo.last)
 
-    val resultPart22 = inputLines.head.zipWithIndex.filter(_._2 % 2 == 1).map(_._1).map(Direction.from).foldLeft((Set(Position(0, 0)), Position(0, 0))):
-      case (acc, newDirection) =>
-        val newPosition = acc._2.move(newDirection)
-        (acc._1 + newPosition, newPosition)*/
+    val alternative: List[String] = test.toList
+
+    val resultPart2 = calc(alternative: _*)*/
 
     val result1 = s"${resultPart1.size}"
     val result2 = s"${resultPart2.size}"
