@@ -25,7 +25,10 @@ object Solver:
     val part2Limit = 50
     val input = inputLines.head
 
-    val result = nTimes(input, part2Limit, part1Limit)
+    // incredibly faster than using string versions
+    val result = nTimesUsingArray(input, part2Limit, part1Limit)
+
+    //val result = nTimes(input, part2Limit, part1Limit)
 
     val result1 = s"${result(1)}"
     val result2 = s"${result(0)}"
@@ -43,15 +46,24 @@ object Solver:
       case Nil => ("", "")
       case _ => runOn(lines)
 
-
   def nTimes(from: String, hardLimit: Int, softLimit: Int): (Int, Int) =
     val (hardResult, lengthSoft) = (1 to hardLimit).foldLeft((from, 0)):
       case (acc, index) =>
-        val result = roundExp(StringBuilder(acc(0)))
+        val result = calc(acc(0))
         index == softLimit match
           case true => (result, result.size)
           case false => (result, acc(1))
     (hardResult.size, lengthSoft)
+
+  def nTimesUsingArray(from: String, hardLimit: Int, softLimit: Int): (Int, Int) =
+    val input = Array[Int](from.length) ++ from.toCharArray.map(_.asDigit)
+    val (hardResult, lengthSoft) = (1 to hardLimit).foldLeft((input, 0)):
+      case (acc, index) =>
+        val result = roundWithArray(acc(0))
+        index == softLimit match
+          case true => (result, result(0))
+          case false => (result, acc(1))
+    (hardResult(0), lengthSoft)
 
   @tailrec
   def round(digits: StringBuilder, last: Char = ' ', countLast: Int = 0, result: StringBuilder = StringBuilder()): String =
@@ -68,12 +80,36 @@ object Solver:
               case true => round(tail, last, countLast + 1, result)
               case false => round(tail, head, 1, result.append(countLast.toString+last))
 
+  def calc(digits: String): String =
+    roundExp(StringBuilder(digits), StringBuilder(digits.length*2))
+
   @tailrec
-  def roundExp(digits: StringBuilder, result: StringBuilder = StringBuilder()): String =
+  def roundExp(digits: StringBuilder, result: StringBuilder): String =
     val head = digits.head
     digits.indexWhere(_ != head) match
       case -1 => result.append(digits.size.toString+head).toString
       case value => roundExp(digits.drop(value), result.append(value.toString+head))
+
+  def roundWithArray(digits: Array[Int]): Array[Int] =
+    val length = digits(0)
+    val result = Array.fill(length * 2 + 1)(0)
+    val work = Array(digits(1), 1, 1)
+    for
+      index <- 2 to length by 1
+    do
+      digits(index) == work(0) match
+        case true => work(1) = work(1) + 1
+        case false =>
+          result(work(2)) = work(1)
+          result(work(2)+1) = work(0)
+          work(0) = digits(index)
+          work(1) = 1
+          work(2) = work(2) + 2
+    result(work(2)) = work(1)
+    result(work(2) + 1) = work(0)
+    result(0) = work(2) + 1
+    result
+
 
 
 end Solver
