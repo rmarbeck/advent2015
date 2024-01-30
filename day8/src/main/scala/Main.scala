@@ -1,6 +1,8 @@
 import scala.io.Source
 import com.typesafe.scalalogging.Logger
 
+import scala.annotation.tailrec
+
 val loggerAOC = Logger("aoc")
 val loggerAOCPart1 = Logger("aoc.part1")
 val loggerAOCPart2 = Logger("aoc.part2")
@@ -19,30 +21,12 @@ val loggerAOCPart2 = Logger("aoc.part2")
 object Solver:
   def runOn(inputLines: Seq[String]): (String, String) =
 
-    val litteralsSum = inputLines.map(_.length).sum
+    val results = inputLines.map(current => (current.length, less(current), more(current))).unzip3.toList.map(_.sum)
 
-    def compute(value: String) =
-      val result = value.replace("\\\\","_").toCharArray.sliding(2, 1).foldLeft((0, 6)):
-        case (acc, Array('\\', 'x')) => (acc(0) - 2, acc(1) + 2)
-        case (acc, Array('\\', '"')) => (acc(0) + 1, acc(1) + 2)
-        case (acc, Array('\\', '\\')) => (acc(0), acc(1) + 2)
-        case (acc, Array('_', _)) => (acc(0), acc(1) + 4)
-        case (acc, Array('"', '"')) => (acc(0), acc(1))
-        case (acc, Array('"', _)) => (acc(0), acc(1) + 1)
-        case (acc, Array(_, '"')) => (acc(0) + 1, acc(1) + 1)
-        case (acc, _) => (acc(0) + 1, acc(1) + 1)
-      println(s"$value [${value.replace("\\\\","_")}] => $result [${value.length}]")
-      result
+    val List(standardLength, lessLength, moreLength) = inputLines.map(current => (current.length, less(current), more(current))).unzip3.toList.map(_.sum)
 
-    val inMemorySum = inputLines.map(compute(_)._1).sum
-    val inMemorySum2 = inputLines.map(compute(_)._2).sum
-
-    println(s"$litteralsSum")
-    println(s"$inMemorySum")
-    println(s"$inMemorySum2")
-
-    val result1 = s"${litteralsSum - inMemorySum}"
-    val result2 = s""
+    val result1 = s"${standardLength - lessLength}"
+    val result2 = s"${moreLength - standardLength}"
 
     (s"${result1}", s"${result2}")
 
@@ -56,4 +40,47 @@ object Solver:
     lines match
       case Nil => ("", "")
       case _ => runOn(lines)
+
+  @tailrec
+  def less(rawString: String, numberOfAntiSlash: Int = 0, current: Int = 0): Int =
+    rawString.length match
+      case 0 => current
+      case _ =>
+        val (head, tail) = (rawString.head, rawString.tail)
+        numberOfAntiSlash match
+          case 0 =>
+            head match
+              case '\\' => less(tail, 1, current)
+              case '"' => less(tail, 0, current)
+              case _ => less(tail, 0, current + 1)
+          case 1 =>
+            head match
+              case '\\' => less(tail, 0, current + 1)
+              case '"' => less(tail, 0, current + 1)
+              case 'x' => less(tail, 2, current)
+              case _ => less(tail, 0, current + 1)
+          case 2 => less(tail, 3, current)
+          case 3 => less(tail, 0, current + 1)
+
+  @tailrec
+  def more(rawString: String, numberOfAntiSlash: Int = 0, current: Int = 0): Int =
+    rawString.length match
+      case 0 => current
+      case _ =>
+        val (head, tail) = (rawString.head, rawString.tail)
+        numberOfAntiSlash match
+          case 0 =>
+            head match
+              case '\\' => more(tail, 1, current)
+              case '"' => more(tail, 0, current + 3)
+              case _ => more(tail, 0, current + 1)
+          case 1 =>
+            head match
+              case '\\' => more(tail, 0, current + 4)
+              case '"' => more(tail, 0, current + 4)
+              case 'x' => more(tail, 0, current + 3)
+              case _ => throw Exception("Not suppported")
+
 end Solver
+
+
