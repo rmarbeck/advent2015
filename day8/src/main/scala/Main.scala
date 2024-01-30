@@ -21,8 +21,6 @@ val loggerAOCPart2 = Logger("aoc.part2")
 object Solver:
   def runOn(inputLines: Seq[String]): (String, String) =
 
-    val results = inputLines.map(current => (current.length, less(current), more(current))).unzip3.toList.map(_.sum)
-
     val List(standardLength, lessLength, moreLength) = inputLines.map(current => (current.length, less(current), more(current))).unzip3.toList.map(_.sum)
 
     val result1 = s"${standardLength - lessLength}"
@@ -42,7 +40,7 @@ object Solver:
       case _ => runOn(lines)
 
   @tailrec
-  def less(rawString: String, numberOfAntiSlash: Int = 0, current: Int = 0): Int =
+  private def less(rawString: String, numberOfAntiSlash: Int = 0, current: Int = 0): Int =
     rawString.length match
       case 0 => current
       case _ =>
@@ -63,7 +61,7 @@ object Solver:
           case 3 => less(tail, 0, current + 1)
 
   @tailrec
-  def more(rawString: String, numberOfAntiSlash: Int = 0, current: Int = 0): Int =
+  private def more(rawString: String, numberOfAntiSlash: Int = 0, current: Int = 0): Int =
     rawString.length match
       case 0 => current
       case _ =>
@@ -79,7 +77,7 @@ object Solver:
               case '\\' => more(tail, 0, current + 4)
               case '"' => more(tail, 0, current + 4)
               case 'x' => more(tail, 0, current + 3)
-              case _ => throw Exception("Not suppported")
+              case _ => throw Exception("Not supported")
 
 end Solver
 
