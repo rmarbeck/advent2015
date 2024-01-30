@@ -22,19 +22,24 @@ object Solver:
     val litteralsSum = inputLines.map(_.length).sum
 
     def compute(value: String) =
-      val result = value.toCharArray.sliding(2, 1).foldLeft(0):
-        case (acc, Array('\\', '\"')) => acc + 1
-        case (acc, Array('\\', 'x')) => acc - 2
-        case (acc, Array('\"', _)) => acc
-        case (acc, Array('_', '\"')) => acc + 1
-        case (acc, _) => acc + 1
-      println(s"$value => $result")
+      val result = value.replace("\\\\","_").toCharArray.sliding(2, 1).foldLeft((0, 6)):
+        case (acc, Array('\\', 'x')) => (acc(0) - 2, acc(1) + 2)
+        case (acc, Array('\\', '"')) => (acc(0) + 1, acc(1) + 2)
+        case (acc, Array('\\', '\\')) => (acc(0), acc(1) + 2)
+        case (acc, Array('_', _)) => (acc(0), acc(1) + 4)
+        case (acc, Array('"', '"')) => (acc(0), acc(1))
+        case (acc, Array('"', _)) => (acc(0), acc(1) + 1)
+        case (acc, Array(_, '"')) => (acc(0) + 1, acc(1) + 1)
+        case (acc, _) => (acc(0) + 1, acc(1) + 1)
+      println(s"$value [${value.replace("\\\\","_")}] => $result [${value.length}]")
       result
 
-    val inMemorySum = inputLines.map(compute).sum
+    val inMemorySum = inputLines.map(compute(_)._1).sum
+    val inMemorySum2 = inputLines.map(compute(_)._2).sum
 
     println(s"$litteralsSum")
     println(s"$inMemorySum")
+    println(s"$inMemorySum2")
 
     val result1 = s"${litteralsSum - inMemorySum}"
     val result2 = s""
