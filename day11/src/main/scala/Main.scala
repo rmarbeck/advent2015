@@ -41,9 +41,9 @@ object Solver:
       case Nil => ("", "")
       case _ => runOn(lines)
 
-  def findNextValidPassword(from: String): Password =
-    def passwordLazyList(from: String): LazyList[Password] =
-      val newValue = Password(from).next
+  def findNextValidPassword(from: String): PasswordAlternative =
+    def passwordLazyList(from: String): LazyList[PasswordAlternative] =
+      val newValue = PasswordAlternative(from).next
       newValue #:: passwordLazyList(newValue.password)
     passwordLazyList(from).find(_.isValid).get
 
@@ -80,6 +80,36 @@ object Solver:
       password.sliding(3, 1).map(_.toCharArray).exists(matches)
 
     private def containsTwoDifferentPairs: Boolean = alphabet.map(_.toString * 2).count(password.contains(_)) >= 2
+
+  case class PasswordAlternative(password: String):
+    val rawValue = password.toCharArray.map(_.toInt)
+
+    def isValid: Boolean = doesNotContainForbidden && containsThreeIncreasingLetter && containsTwoDifferentPairs
+
+    def next: PasswordAlternative =
+      val newPassword = rawValue.clone
+      for
+        index <- newPassword.length - 1 to 0 by -1
+      do
+        newPassword.splitAt(index + 1)._2.find(_ != aAsInt) match
+          case None => newPassword(index) match
+            case value if value == zAsInt => newPassword(index) = aAsInt
+            case value => newPassword(index) += 1
+          case _ => ()
+
+      PasswordAlternative(newPassword.map(_.toChar).mkString)
+
+    private def doesNotContainForbidden: Boolean = rawValue.distinct.intersect(forbiddenAsInt).isEmpty
+
+    private def containsThreeIncreasingLetter: Boolean = rawValue.sliding(3, 1).exists(current => current(0) + 1 == current(1) && current(0) + 2 == current(2))
+
+    private def containsTwoDifferentPairs: Boolean =
+      val result = rawValue.foldLeft((List[Int](), 0)):
+        case (acc, newValue) =>
+          newValue == acc(1) match
+            case true => (newValue :: acc(0), 0)
+            case false => (acc(0), newValue)
+      result._1.distinct.length >= 2
 
 end Solver
 
