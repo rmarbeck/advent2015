@@ -25,9 +25,9 @@ object Solver:
         case (name, List(capacity, durability, flavor, texture, calories)) => Ingredient(name, capacity, durability, flavor, texture, calories)
         case _ => throw Exception("Not possible")
 
-    val resultPart1 = dig(100, Mixture(Nil), ingredients, Mixture.score)
+    val resultPart1 = dig(100, Mixture.empty, ingredients, Mixture.score)
 
-    val resultPart2 = dig(100, Mixture(Nil), ingredients, Mixture.scorePart2)
+    val resultPart2 = dig(100, Mixture.empty, ingredients, Mixture.scorePart2)
 
     val result1 = s"$resultPart1"
     val result2 = s"$resultPart2"
@@ -54,8 +54,9 @@ object Solver:
         .maxOption.getOrElse(0)
       case ingredients =>
         val (shortestRangeIngredient, shortestRange) = ingredients.map(ingredient => (ingredient, ingredient.validRange(toReach, currentMixture, remainingIngredients.filterNot(_ == ingredient)))).sortBy(_._2.size).head
+        val newRemainingIngredients = remainingIngredients.filterNot(_ == shortestRangeIngredient)
         shortestRange.map:
-          case quantity => dig(toReach, currentMixture.add(shortestRangeIngredient, quantity), remainingIngredients.filterNot(_ == shortestRangeIngredient), scoring)
+          case quantity => dig(toReach, currentMixture.add(shortestRangeIngredient, quantity), newRemainingIngredients, scoring)
         .maxOption.getOrElse(0)
 
 end Solver
@@ -84,8 +85,9 @@ case class Mixture(dozedIngredients: Seq[(Ingredient, Int)]):
 
 object Mixture:
   def score(mixture: Mixture) = mixture.score
-
   def scorePart2(mixture: Mixture) = mixture.scorePart2
+
+  def empty: Mixture = Mixture(Nil)
 
 case class Ingredient(name: String, capacity: Int, durability: Int, flavor: Int, texture: Int, calories: Int):
   def values = List(capacity, durability, flavor, texture, calories)
