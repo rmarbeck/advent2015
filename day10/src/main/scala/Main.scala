@@ -90,9 +90,10 @@ object Solver:
       case -1 => result.append(digits.size.toString+head).toString
       case value => roundExp(digits.drop(value), result.append(value.toString+head))
 
+
   def roundWithArray(digits: Array[Int]): Array[Int] =
     val length = digits(0)
-    val result = Array.fill(length * 2 + 1)(0)
+    val result = Array.ofDim[Int](length * 2 + 1)
     val work = Array(digits(1), 1, 1)
     for
       index <- 2 to length by 1
