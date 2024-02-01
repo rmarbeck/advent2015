@@ -28,8 +28,8 @@ object Solver:
     val part1Table = Table(happinessVariations)
     val resultPart1 = part1Table.getBestScore
 
-    val happinessVariationWithMyself = part1Table.friends.flatMap(currentFriend => List(HappinessVariation(currentFriend.name, "Myself", 0), HappinessVariation("Myself", currentFriend.name, 0))) ++ happinessVariations
-    val part2Table = Table(happinessVariationWithMyself)
+    val happinessVariationsWithMyself = part1Table.friends.flatMap(currentFriend => List(HappinessVariation(currentFriend.name, "Myself", 0), HappinessVariation("Myself", currentFriend.name, 0))) ++ happinessVariations
+    val part2Table = Table(happinessVariationsWithMyself)
     val resultPart2 = part2Table.getBestScore
 
     val result1 = s"${resultPart1}"
