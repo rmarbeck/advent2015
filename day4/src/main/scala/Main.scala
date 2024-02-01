@@ -56,6 +56,9 @@ object MD5 {
     val m = java.security.MessageDigest.getInstance("MD5")
     val b = s.getBytes("UTF-8")
     m.update(b, 0, b.length)
-    new java.math.BigInteger(1, m.digest()).toString(16).reverse.padTo(32, "0").reverse.mkString
+    val result = new java.math.BigInteger(1, m.digest()).toString(16)
+    32-result.length match
+      case 0 => result
+      case value => "0"*value + result
   }
 }
