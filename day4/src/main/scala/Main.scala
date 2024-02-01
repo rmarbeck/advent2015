@@ -57,11 +57,11 @@ object MD5 {
     m.update(s.getBytes)
     val firstBytes = m.digest.take(maxZerosToFind/2)
     val valueOfFirstBytes = firstBytes.foldLeft(0):
-      case (acc, currentByte) => acc * 256 + currentByte.toInt
+      case (acc, currentByte) => acc * 256 + (currentByte & 0xff).toInt
 
     valueOfFirstBytes match
       case 0 => maxZerosToFind
-      case value if value > 0 && value < 16 => maxZerosToFind - 1
+      case value if value < 16 => maxZerosToFind - 1
       case _ => -1
   }
 
