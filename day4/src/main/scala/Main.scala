@@ -45,14 +45,33 @@ object Solver:
 end Solver
 
 def startsWith(numberOfZeros: Int, key: String, index: Int = 0): LazyList[Int] =
-  val computed = MD5.hash(key + index.toString).take(numberOfZeros)
-  computed.indexWhere(_ != '0') match
-    case -1 => LazyList.empty
+  MD5.hashNumberOfLeadingZerosBasedOnFirstBytes(key + index.toString, numberOfZeros) match
+    case value if value >= numberOfZeros => LazyList.empty
     case value => LazyList.cons(value, startsWith(numberOfZeros, key, index+1))
 
 
 object MD5 {
-  def hash(s: String) = {
+  def hashNumberOfLeadingZerosBasedOnFirstBytes(s: String, maxZerosToFind: Int): Int = {
+    val nbOfBytes = math.ceil(maxZerosToFind / 2d).toInt
+    val m = java.security.MessageDigest.getInstance("MD5")
+    m.update(s.getBytes)
+    val firstBytes = m.digest.take(maxZerosToFind/2)
+    val valueOfFirstBytes = firstBytes.foldLeft(0):
+      case (acc, currentByte) => acc * 256 + currentByte.toInt
+
+    valueOfFirstBytes match
+      case 0 => maxZerosToFind
+      case value if value > 0 && value < 16 => maxZerosToFind - 1
+      case _ => -1
+  }
+
+  def hashNumberOfLeadingZeros(s: String): Int = {
+    val m = java.security.MessageDigest.getInstance("MD5")
+    m.update(s.getBytes)
+    val valueAsBytes = m.digest
+    32 - new java.math.BigInteger(1, valueAsBytes).toString(16).length
+  }
+  def hash(s: String): String = {
     val m = java.security.MessageDigest.getInstance("MD5")
     val b = s.getBytes("UTF-8")
     m.update(b, 0, b.length)
