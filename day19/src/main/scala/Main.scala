@@ -1,6 +1,8 @@
 import scala.io.Source
 import com.typesafe.scalalogging.Logger
 
+import scala.annotation.tailrec
+
 val loggerAOC = Logger("aoc")
 val loggerAOCPart1 = Logger("aoc.part1")
 val loggerAOCPart2 = Logger("aoc.part2")
@@ -27,8 +29,13 @@ object Solver:
 
     var results = Set[String]()
 
-    replacements.foreach:
-      case replacement => molecule.
+    replacements.map(replace => indexes(molecule, replace.from, Nil)).tapEach(println)
+
+
+    /*replacements.foreach:
+      case replacement => molecule.*/
+
+
 
     val result1 = s""
     val result2 = s""
@@ -45,6 +52,17 @@ object Solver:
     lines match
       case Nil => ("", "")
       case _ => runOn(lines)
+
+  @tailrec
+  def indexes(toLookIn: String, toFind: String, indexList: List[Int]): List[Int] =
+    toLookIn match
+      case value if value.isEmpty => indexList
+      case _ =>
+        val currentHead = indexList.headOption.map(_ + toFind.length).getOrElse(0)
+        toLookIn.indexOf(toFind, currentHead) match
+          case -1 => indexList
+          case value => indexes(toLookIn, toFind, (currentHead + value) :: indexList)
+
 end Solver
 
 case class Replacement(from: String, to: String)
