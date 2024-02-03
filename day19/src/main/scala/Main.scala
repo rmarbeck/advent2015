@@ -27,18 +27,24 @@ object Solver:
           case s"$from => $to" => (Replacement(from, to) :: acc(0), acc(1))
           case value => (acc(0), value)
 
-    var results = Set[String]()
+    val result = replacements.flatMap(replacement => replace(molecule, replacement.from, replacement.to)).toSet
 
-    replacements.map(replace => indexes(molecule, replace.from, Nil)).tapEach(println)
+    def reduceMolecule(moleculeToReduce: String): String =
+      replacements.sortBy(_.to.size).reverse.foldLeft(moleculeToReduce):
+        case (acc, replacement) if acc == moleculeToReduce => replaceAll(acc, replacement.to, replacement.from)
+        case (acc, _) => acc
+
+    replacements.map(_.to).foreach:
+      case replacement => println(s"$replacement : ${indexes(molecule, replacement,Nil).length}")
+
+    val resultPart2 = (0 to 0).foldLeft(Set("e")):
+      case (acc, index) if acc.contains("HOH") => println(s"Found : ${index - 1}"); Set("")
+      case (acc, _) => next(acc, replacements) -- acc
 
 
-    /*replacements.foreach:
-      case replacement => molecule.*/
 
-
-
-    val result1 = s""
-    val result2 = s""
+    val result1 = s"${result.size}"
+    val result2 = s"${resultPart2}"
 
     (s"${result1}", s"${result2}")
 
@@ -53,15 +59,29 @@ object Solver:
       case Nil => ("", "")
       case _ => runOn(lines)
 
+  def next(from: Set[String], replacements: List[Replacement]): Set[String] =
+    from.flatMap:
+      case currentMolecule => replacements.flatMap(replacement => replace(currentMolecule, replacement.from, replacement.to)).toSet
+
+  def replaceAll(toReplaceIn: String, toFind: String, replacement: String): String =
+    toReplaceIn.replaceFirst(toFind, replacement)
+
+  def replace(toReplaceIn: String, toFind: String, replacement: String): Set[String] =
+    val indexesWhereToReplace = indexes(toReplaceIn, toFind, Nil).distinct
+    val (mainSize, patternSize) = (toReplaceIn.length, toFind.length)
+    indexesWhereToReplace.map:
+      case currentIndex =>
+        val start = toReplaceIn.slice(0, currentIndex)
+        val end = toReplaceIn.slice(currentIndex + patternSize, mainSize-1)
+        start + replacement + end
+    .toSet
+
   @tailrec
   def indexes(toLookIn: String, toFind: String, indexList: List[Int]): List[Int] =
-    toLookIn match
-      case value if value.isEmpty => indexList
-      case _ =>
-        val currentHead = indexList.headOption.map(_ + toFind.length).getOrElse(0)
-        toLookIn.indexOf(toFind, currentHead) match
-          case -1 => indexList
-          case value => indexes(toLookIn, toFind, (currentHead + value) :: indexList)
+    val currentHead = indexList.headOption.map(_ + toFind.length).getOrElse(0)
+    toLookIn.indexOf(toFind, currentHead) match
+      case -1 => indexList
+      case value => indexes(toLookIn, toFind, value :: indexList)
 
 end Solver
 
