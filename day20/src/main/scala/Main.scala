@@ -21,27 +21,26 @@ val loggerAOCPart2 = Logger("aoc.part2")
 object Solver:
   def runOn(inputLines: Seq[String]): (String, String) =
 
-    //println(presents(100000, inputLines.head.toLong).last)
-    //println(integer(1, inputLines.head.toLong).tapEach(println).take(15).last)
-    //val firstPrimes = Primes.primes.take(10)
-
     val limit = inputLines.head.toLong
 
+    val softLimit = (limit / 10).toInt
+
+    val housePart1 = Array.fill(softLimit)(1)
+    val housePart2 = Array.fill(softLimit)(1)
+
     for
-      index <- 1000 to Int.MaxValue
+      index <- 2 until softLimit
+      j <- index until softLimit by index
+      if j % index == 0 && housePart1(j-1) < limit
     do
-      val newValue = rangeLong(2, (index / 2)).foldLeft(1l + index):
-        case (acc, elfNumber) => index % elfNumber == 0 match
-          case true => acc + elfNumber * 1l
-          case false => acc
-      if (newValue * 10 >= limit)
-        println(index)
+      housePart1(j) += index * 10
+      if (j <= index * 50)
+        housePart2(j) += index * 11
 
-    //(1 to 9).map(index => firstPrimes.tapEach(current => print(s"$current,")).take(index).product).foreach(println)
-    //(1 to 9).map(index => presents(firstPrimes.take(index).product, 3400000).head).foreach(println)
+    val List(resultPart1, resultPart2) = List(housePart1, housePart2).map(_.zipWithIndex.filter(_._1 >= limit.toInt).map(_._2).sorted.head)
 
-    val result1 = s""
-    val result2 = s""
+    val result1 = s"$resultPart1"
+    val result2 = s"$resultPart2"
 
     (s"${result1}", s"${result2}")
 
@@ -56,48 +55,3 @@ object Solver:
       case Nil => ("", "")
       case _ => runOn(lines)
 end Solver
-
-
-
-object Primes:
-  val primes: LazyList[Int] = primes(1)
-  def primes(from: Int, previous: List[Int] = Nil): LazyList[Int] =
-    @tailrec
-    def next(current: Int): Int =
-      previous.filterNot(_ == 1).forall(current % _ != 0) match
-        case true => current
-        case false => next(current + 1)
-
-    val nextVal = next(from)
-    nextVal #:: primes(nextVal + 1, nextVal :: previous)
-
-
-def factorial(toNumber: Long): Long =
-  rangeLong(1l, toNumber).foldLeft(1l)(_ * _)
-
-def integer(houseNumber: Int, limit: Long): LazyList[Long] =
-  val newValue = (math.pow(houseNumber, 2) + houseNumber) / 2
-
-  newValue >= limit match
-    case true => LazyList.empty
-    case false => LazyList.cons(newValue.toLong, integer(houseNumber + 1, limit))
-def rangeLong(from: Long, to: Long): LazyList[Long] =
-  from > to match
-    case true => LazyList.empty
-    case false => LazyList.cons(from, rangeLong(from + 1 , to))
-
-def present(houseNumber: Long): Long =
-  rangeLong(1, houseNumber).foldLeft(0l):
-    case (acc, elfNumber) => houseNumber%elfNumber == 0 match
-      case true => acc + elfNumber * 10l
-      case false => acc
-
-
-def presents(houseNumber: Long, limit: Long): LazyList[Long] =
-  val newValue = rangeLong(1, houseNumber).foldLeft(0l):
-    case (acc, elfNumber) => houseNumber%elfNumber == 0 match
-      case true => acc + elfNumber * 10l
-      case false => acc
-  newValue >= limit match
-    case true => houseNumber #:: LazyList.empty
-    case false => LazyList.cons(houseNumber, presents(houseNumber + 1, limit))
