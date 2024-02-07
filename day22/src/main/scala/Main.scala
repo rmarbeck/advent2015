@@ -3,6 +3,7 @@ import com.typesafe.scalalogging.Logger
 
 import scala.annotation.tailrec
 import scala.collection.immutable.TreeSet
+import scala.reflect.ClassTag
 
 val loggerAOC = Logger("aoc")
 val loggerAOCPart1 = Logger("aoc.part1")
@@ -100,17 +101,13 @@ case class Strategy(decisions: List[Spell], player: Player, boss: Player) extend
   lazy val cost = decisions.map(_.cost).sum
   lazy val isAWin: Boolean = bossHitsRemaining <= 0
   lazy val isALoss: Boolean = playerHitsRemaining <= 0 && !isAWin
-  def effectingTurns(spell: Spell, indexInList: Int): Int =
-    val result = math.min((turnsPlayed - 2 * indexInList) - 1, spell.duration)
-    spell match
-      case poison: Poison => loggerAOCPart1.trace(s"Effecting Turns [$spell] out of [$turnsPlayed] [$indexInList] => $result")
-      case _ => ()
-    result
+  def effectingTurns(spell: Spell, indexInList: Int): Int = math.min((turnsPlayed - 2 * indexInList) - 1, spell.duration)
 
-  def remainingTurnsAtEnd(test: Spell => Boolean): Int = decisions.zipWithIndex.findLast:
-    case (spell, index) if test.apply(spell) => true
-    case _ => false
-  .map((spell, index) => spell.duration - effectingTurns(spell, index) - 1).getOrElse(0)
+  def remainingTurnsAtEnd[T: ClassTag]: Int =
+    decisions.zipWithIndex.findLast:
+      case (spell: T, index) => true
+      case _ => false
+    .map((spell, index) => spell.duration - effectingTurns(spell, index) - 1).getOrElse(0)
 
   lazy val manaRemaining: Int =
     decisions.zipWithIndex.map:
@@ -130,21 +127,11 @@ case class Strategy(decisions: List[Spell], player: Player, boss: Player) extend
       case (spell: (MagicMissile | Drain | Poison), index) => spell.damages * effectingTurns(spell, index)
       case _ => 0
     .sum
-    //println(s"$decisions => Damages for boss $damages")
     boss.hits.number - damages
 
-  lazy val shieldRemainingTime: Int =
-    remainingTurnsAtEnd:
-      case current: Shield => true
-      case _ => false
-  lazy val poisonRemainingTime: Int =
-    remainingTurnsAtEnd:
-      case current: Poison => true
-      case _ => false
-  lazy val rechargeRemainingTime: Int =
-    remainingTurnsAtEnd:
-      case current: Recharge => true
-      case _ => false
+  lazy val shieldRemainingTime: Int = remainingTurnsAtEnd[Shield]
+  lazy val poisonRemainingTime: Int = remainingTurnsAtEnd[Poison]
+  lazy val rechargeRemainingTime: Int = remainingTurnsAtEnd[Recharge]
 
   override def toString: String = s"$decisions [$cost]: $isAWin ($manaRemaining, $bossHitsRemaining, $playerHitsRemaining, $shieldRemainingTime, $poisonRemainingTime, $rechargeRemainingTime)"
 
