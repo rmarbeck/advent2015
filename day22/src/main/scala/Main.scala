@@ -31,7 +31,16 @@ object Solver:
       case value if value < 20 => new Player(10, 0, 250)
       case _ => new Player(50, 0, 500)
 
-    val startingStrategy = Strategy(Nil, player, boss)
+    val startingStrategy = Strategy(Vector.empty, player, boss)
+
+    /**
+     * Djikstra is not relevant : too slow and the way we choose best is not necessarly proven to be the best
+     */
+    /*val graph: Graph[Summit] = GraphOfStrategies(Seq(Summit(startingStrategy)))
+    val graph2: Graph[Summit] = GraphOfStrategiesPart2(Seq(Summit(startingStrategy)))
+
+    val resultPart1 = Dijkstra.solve[Summit](graph, Summit(startingStrategy), (summit) => summit.isAWin)
+    val resultPart2 = Dijkstra.solve[Summit](graph2, Summit(startingStrategy), (summit) => summit.isAWin)*/
 
     val resultPart1 = findLowestCost(TreeSet(startingStrategy))
     val resultPart2 = findLowestCost(TreeSet(startingStrategy), isPart2 = true)
@@ -78,7 +87,7 @@ case class Mana(number: Int)
 case class Player(hits: Hits, damage: Damage, mana: Mana):
   def this(hits: Int, damage: Int, mana: Int) = this(Hits(hits), Damage(damage), Mana(mana))
 
-case class Strategy(decisions: List[Spell], player: Player, boss: Player) extends Ordered[Strategy]:
+case class Strategy(decisions: Vector[Spell], player: Player, boss: Player) extends Ordered[Strategy]:
   def spellsNames: String = decisions.map(_.name).mkString
   override def equals(obj: Any): Boolean =
     obj match
