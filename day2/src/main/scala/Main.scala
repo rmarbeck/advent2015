@@ -1,18 +1,18 @@
 import scala.io.Source
 import com.typesafe.scalalogging.Logger
 
-val loggerAOC = Logger("aoc")
-val loggerAOCPart1 = Logger("aoc.part1")
-val loggerAOCPart2 = Logger("aoc.part2")
+val loggerAOC: Logger = Logger("aoc")
+val loggerAOCPart1: Logger = Logger("aoc.part1")
+val loggerAOCPart2: Logger = Logger("aoc.part2")
 
-@main def hello: Unit =
+@main def hello(): Unit =
   loggerAOC.trace("Root trace activated")
   loggerAOC.debug("Root debug activated")
   println("Launching Day2")
   List[() => (String, String)]( () => Solver.solveTest, () => Solver.solve).foreach: f =>
     val (score1, score2) = f.apply()
-    println(s"1 : ${score1}")
-    println(s"2 : ${score2}")
+    println(s"1 : $score1")
+    println(s"2 : $score2")
     println(s"----------------")
   println("Done")
 
@@ -27,7 +27,7 @@ object Solver:
     val result1 = s"${resultPart1.sum}"
     val result2 = s"${resultPart2.sum}"
 
-    (s"${result1}", s"${result2}")
+    (s"$result1", s"$result2")
 
   def solveTest: (String, String) =
     solver("test.txt")
@@ -44,9 +44,9 @@ end Solver
 case class Package(height: Int, length: Int, width: Int):
   def this(heightAsString: String, lengthAsString: String, widthAsString: String) =
     this(heightAsString.toInt, lengthAsString.toInt, widthAsString.toInt)
-  private val vals: List[Int] = List(height, length, width).sorted
-  private val mins: List[Int] = vals.take(2)
-  def paperNeeded: Int =
-    vals.combinations(2).map(2*_.product).sum + mins.product
-  def ribbonNeeded: Int =
-    vals.product + mins.map(2*_).sum
+  private val values: List[Int] = List(height, length, width).sorted
+  private val minimumValues: List[Int] = values.take(2)
+  lazy val paperNeeded: Int =
+    (2 * values.combinations(2).map(_.product).sum) + minimumValues.product
+  lazy val ribbonNeeded: Int =
+    values.product + 2 * minimumValues.sum
