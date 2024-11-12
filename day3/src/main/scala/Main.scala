@@ -19,7 +19,7 @@ val loggerAOCPart2: Logger = Logger("aoc.part2")
 object Solver:
   private def runOn(inputLines: Seq[String]): (String, String) =
 
-    val input = inputLines.head
+    val input: String = inputLines.head
 
     val resultPart1 = calculate(input)
 
@@ -30,8 +30,8 @@ object Solver:
 
     val resultPart2 = calculate(odd, even)
 
-    val result1 = s"${resultPart1.size}"
-    val result2 = s"${resultPart2.size}"
+    val result1 = s"$resultPart1"
+    val result2 = s"$resultPart2"
 
     (s"$result1", s"$result2")
 
@@ -47,10 +47,10 @@ object Solver:
       case _ => runOn(lines)
 end Solver
 
-def calculate(values: String*): Set[Position] =
+def calculate(values: String*): Int =
   def calculate(directions: String): Set[Position] =
     directions.map(Direction.from).foldLeft(Path.start)(_ trace _).positions
-  values.map(calculate).reduce(_ ++ _)
+  values.map(calculate).reduce(_ ++ _).size
 
 case class Path(positions: Set[Position], current: Position):
   def trace(direction: Direction): Path =
@@ -84,4 +84,4 @@ case class Position(row: Int, col: Int):
       case East => this.copy(col = col + 1)
 
 object Position:
-  lazy val origin = Position(0, 0)
+  lazy val origin: Position = Position(0, 0)
