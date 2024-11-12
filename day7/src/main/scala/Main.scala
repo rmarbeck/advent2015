@@ -19,7 +19,7 @@ val loggerAOCPart2: Logger = Logger("aoc.part2")
 object Solver:
   private def runOn(inputLines: Seq[String]): (String, String) =
 
-    val resultPart1 = buildAndRead(inputLines, amendWiresPart1)
+    val resultPart1 = buildAndRead(inputLines, doNothing)
 
     val resultPart2 = buildAndRead(inputLines, amendWiresPart2(resultPart1))
 
@@ -52,9 +52,9 @@ def buildAndRead(inputLines: Seq[String], amendingFunction: Seq[Wire] => WireBox
 
   summon[WireBox].getWire("a").unSignedValue
 
-def amendWiresPart1(wires: Seq[Wire])(using WireBox): Seq[Wire] = wires
+def doNothing(wires: Seq[Wire]): Seq[Wire] = wires
 
-def amendWiresPart2(resultPart1: Int)(wires: Seq[Wire])(using WireBox): Seq[Wire] =
+def amendWiresPart2(resultPart1: Int)(wires: Seq[Wire])(using wireBox: WireBox): Seq[Wire] =
   wires.map:
     case Simple(name, _) if name == "b" => Simple(name, resultPart1.toString)
     case value => value
