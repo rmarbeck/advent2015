@@ -1,11 +1,11 @@
 import scala.io.Source
 import com.typesafe.scalalogging.Logger
 
-val loggerAOC = Logger("aoc")
-val loggerAOCPart1 = Logger("aoc.part1")
-val loggerAOCPart2 = Logger("aoc.part2")
+val loggerAOC: Logger = Logger("aoc")
+val loggerAOCPart1: Logger = Logger("aoc.part1")
+val loggerAOCPart2: Logger = Logger("aoc.part2")
 
-@main def hello: Unit =
+@main def hello(): Unit =
   loggerAOC.trace("Root trace activated")
   loggerAOC.debug("Root debug activated")
   println("Launching Day7")
@@ -17,25 +17,11 @@ val loggerAOCPart2 = Logger("aoc.part2")
   println("Done")
 
 object Solver:
-  def runOn(inputLines: Seq[String]): (String, String) =
+  private def runOn(inputLines: Seq[String]): (String, String) =
 
-    val box = WireBox()
+    val resultPart1 = buildAndRead(inputLines, amendWiresPart1)
 
-    val wires, wires3 = getWires(inputLines)(using box)
-
-    box.addWires(wires)
-    val resultPart1 = box.getWire("a").unSignedValue(using box)
-
-    val box2 = WireBox()
-    val wires2 = getWires(inputLines)(using box2)
-
-    val amendedWires = wires2.map:
-      case Simple(name, _) if name == "b" => Simple(name, resultPart1.toString)(using box2)
-      case value => value
-
-    box2.addWires(amendedWires)
-
-    val resultPart2 = box2.getWire("a").unSignedValue(using box2)
+    val resultPart2 = buildAndRead(inputLines, amendWiresPart2(resultPart1))
 
     val result1 = s"${resultPart1}"
 
@@ -55,7 +41,25 @@ object Solver:
       case _ => runOn(lines)
 end Solver
 
-def getWires(inputLines: Seq[String])(using WireBox) =
+def buildAndRead(inputLines: Seq[String], amendingFunction: Seq[Wire] => WireBox ?=> Seq[Wire]): Int =
+  given WireBox = new WireBox()
+
+  val wires = populateWiresInBox(inputLines)
+
+  val amendedWires = amendingFunction(wires)
+
+  summon[WireBox].addWires(amendedWires)
+
+  summon[WireBox].getWire("a").unSignedValue
+
+def amendWiresPart1(wires: Seq[Wire])(using WireBox): Seq[Wire] = wires
+
+def amendWiresPart2(resultPart1: Int)(wires: Seq[Wire])(using WireBox): Seq[Wire] =
+  wires.map:
+    case Simple(name, _) if name == "b" => Simple(name, resultPart1.toString)
+    case value => value
+
+def populateWiresInBox(inputLines: Seq[String])(using WireBox): Seq[Wire] =
   inputLines.map:
     case s"$left AND $right -> $name" => BitWiseAnd(name, left, right)
     case s"$left OR $right -> $name" => BitWiseOr(name, left, right)
@@ -65,9 +69,9 @@ def getWires(inputLines: Seq[String])(using WireBox) =
     case s"$value -> $name" => Simple(name, value)
 
 class WireBox:
-  var wireList: Map[String, Wire] = Map()
+  private var wireList: Map[String, Wire] = Map()
 
-  def addWires(wires: Seq[Wire]) =
+  def addWires(wires: Seq[Wire]): Unit =
     wireList = wireList ++ wires.map(current => current.name -> current).toMap
 
   def getWire(name: String): Wire = wireList.get(name) match
@@ -84,19 +88,19 @@ trait Wire(val name: String):
     result
 
 case class Simple(simpleName: String, other: String)(using WireBox) extends Wire(simpleName):
-  lazy val value = getValue(other)
+  lazy val value: Int = getValue(other)
 
 case class BitWiseAnd(bitWiseAndName: String, left: String, right: String)(using WireBox) extends Wire(bitWiseAndName):
-  lazy val value = getValue(left) & getValue(right)
+  lazy val value: Int = getValue(left) & getValue(right)
 
 case class BitWiseOr(bitWiseOrName: String, left: String, right: String)(using WireBox) extends Wire(bitWiseOrName):
-  lazy val value = getValue(left) | getValue(right)
+  lazy val value: Int = getValue(left) | getValue(right)
 
 case class LeftShift(leftShiftName: String, left: String, right: Int)(using WireBox) extends Wire(leftShiftName):
-  lazy val value = getValue(left) << right
+  lazy val value: Int = getValue(left) << right
 
 case class RightShift(rightShiftName: String, left: String, right: Int)(using WireBox) extends Wire(rightShiftName):
-  lazy val value = getValue(left) >> right
+  lazy val value: Int = getValue(left) >> right
 
 case class NOT(notName: String, right: String)(using WireBox) extends Wire(notName):
-  lazy val value = ~getValue(right)
+  lazy val value: Int = ~ getValue(right)
