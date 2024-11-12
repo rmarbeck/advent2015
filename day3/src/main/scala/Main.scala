@@ -1,45 +1,39 @@
-import Direction.North
-
 import scala.io.Source
 import com.typesafe.scalalogging.Logger
 
-val loggerAOC = Logger("aoc")
-val loggerAOCPart1 = Logger("aoc.part1")
-val loggerAOCPart2 = Logger("aoc.part2")
+val loggerAOC: Logger = Logger("aoc")
+val loggerAOCPart1: Logger = Logger("aoc.part1")
+val loggerAOCPart2: Logger = Logger("aoc.part2")
 
-@main def hello: Unit =
+@main def hello(): Unit =
   loggerAOC.trace("Root trace activated")
   loggerAOC.debug("Root debug activated")
   println("Launching Day3")
   List[() => (String, String)]( () => Solver.solveTest, () => Solver.solve).foreach: f =>
     val (score1, score2) = f.apply()
-    println(s"1 : ${score1}")
-    println(s"2 : ${score2}")
+    println(s"1 : $score1")
+    println(s"2 : $score2")
     println(s"----------------")
   println("Done")
 
 object Solver:
-  def runOn(inputLines: Seq[String]): (String, String) =
+  private def runOn(inputLines: Seq[String]): (String, String) =
 
-    val resultPart1 = calc(inputLines.head)
+    val input = inputLines.head
 
-    val (odd, even) = inputLines.head.grouped(2).foldLeft(("", "")):
-      case (acc, duo) => (acc._1 + duo.head, acc._2 + duo.last)
+    val resultPart1 = calculate(input)
 
-    val resultPart2 = calc(odd, even)
+    val List(odd, even) = input.zipWithIndex.partitionMap:
+      case (value, index) if index % 2 == 0 => Left(value)
+      case (value, _) => Right(value)
+    .toList.map(_.mkString)
 
-    /*
-    val alternative = inputLines.head.grouped(2).foldLeft(("", "")):
-      case (acc, duo) => (acc._1 + duo.head, acc._2 + duo.last)
-
-    val alternative: List[String] = test.toList
-
-    val resultPart2 = calc(alternative: _*)*/
+    val resultPart2 = calculate(odd, even)
 
     val result1 = s"${resultPart1.size}"
     val result2 = s"${resultPart2.size}"
 
-    (s"${result1}", s"${result2}")
+    (s"$result1", s"$result2")
 
   def solveTest: (String, String) =
     solver("test.txt")
@@ -53,14 +47,19 @@ object Solver:
       case _ => runOn(lines)
 end Solver
 
-def calc(values: String*): Set[Position] =
-  def calc(value: String): Set[Position] =
-    value.map(Direction.from).foldLeft((Set(Position(0,0)), Position(0,0))):
-      case (acc, newDirection) =>
-        val newPosition = acc._2.move(newDirection)
-        (acc._1 + newPosition, newPosition)
-    ._1
-  values.map(calc).reduce(_ ++ _)
+def calculate(values: String*): Set[Position] =
+  def calculate(directions: String): Set[Position] =
+    directions.map(Direction.from).foldLeft(Path.start)(_ trace _).positions
+  values.map(calculate).reduce(_ ++ _)
+
+case class Path(positions: Set[Position], current: Position):
+  def trace(direction: Direction): Path =
+    val newPosition = current.move(direction)
+    Path(positions + newPosition, newPosition)
+
+object Path:
+  import Position.*
+  lazy val start = new Path(Set(origin), origin)
 
 enum Direction:
   case North, East, South, West
@@ -83,3 +82,6 @@ case class Position(row: Int, col: Int):
       case South => this.copy(row = row + 1)
       case West => this.copy(col = col - 1)
       case East => this.copy(col = col + 1)
+
+object Position:
+  lazy val origin = Position(0, 0)
