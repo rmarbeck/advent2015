@@ -18,10 +18,12 @@ val loggerAOCPart2: Logger = Logger("aoc.part2")
 
 object Solver:
   private def runOn(inputLines: Seq[String]): (String, String) =
+    
+    val builder = buildAndRead(inputLines)
 
-    val resultPart1 = buildAndRead(inputLines, doNothing)
+    val resultPart1 = builder(doNothing)
 
-    val resultPart2 = buildAndRead(inputLines, amendWiresPart2(resultPart1))
+    val resultPart2 = builder(amendWiresPart2(resultPart1))
 
     val result1 = s"${resultPart1}"
 
@@ -41,7 +43,7 @@ object Solver:
       case _ => runOn(lines)
 end Solver
 
-def buildAndRead(inputLines: Seq[String], amendingFunction: Seq[Wire] => WireBox ?=> Seq[Wire]): Int =
+def buildAndRead(inputLines: Seq[String])(amendingFunction: Seq[Wire] => WireBox ?=> Seq[Wire]): Int =
   given WireBox = new WireBox()
 
   val wires = populateWiresInBox(inputLines)
