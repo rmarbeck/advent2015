@@ -11,25 +11,28 @@ val loggerAOCPart2: Logger = Logger("aoc.part2")
   println("Launching Day7")
   List[() => (String, String)]( () => Solver.solveTest, () => Solver.solve).foreach: f =>
     val (score1, score2) = f.apply()
-    println(s"1 : ${score1}")
-    println(s"2 : ${score2}")
+    println(s"1 : $score1")
+    println(s"2 : $score2")
     println(s"----------------")
   println("Done")
 
 object Solver:
   private def runOn(inputLines: Seq[String]): (String, String) =
-    
+
     val builder = buildAndRead(inputLines)
 
-    val resultPart1 = builder(doNothing)
+    val resultPart1 = builder(identity)
 
-    val resultPart2 = builder(amendWiresPart2(resultPart1))
+    val resultPart2 = builder:
+      _.map:
+        case Simple(name, _) if name == "b" => Simple(name, resultPart1.toString)
+        case value => value
 
-    val result1 = s"${resultPart1}"
+    val result1 = s"$resultPart1"
 
     val result2 = s"$resultPart2"
 
-    (s"${result1}", s"${result2}")
+    (s"$result1", s"$result2")
 
   def solveTest: (String, String) =
     solver("test.txt")
@@ -54,13 +57,6 @@ def buildAndRead(inputLines: Seq[String])(amendingFunction: Seq[Wire] => WireBox
 
   summon[WireBox].getWire("a").unSignedValue
 
-def doNothing(wires: Seq[Wire]): Seq[Wire] = wires
-
-def amendWiresPart2(resultPart1: Int)(wires: Seq[Wire])(using wireBox: WireBox): Seq[Wire] =
-  wires.map:
-    case Simple(name, _) if name == "b" => Simple(name, resultPart1.toString)
-    case value => value
-
 def populateWiresInBox(inputLines: Seq[String])(using WireBox): Seq[Wire] =
   inputLines.map:
     case s"$left AND $right -> $name" => BitWiseAnd(name, left, right)
@@ -78,7 +74,7 @@ class WireBox:
 
   def getWire(name: String): Wire = wireList.get(name) match
     case Some(value) => value
-    case None => throw Exception(s"Not found ${name}")
+    case None => throw Exception(s"Not found $name")
 
 trait Wire(val name: String):
   def unSignedValue(using WireBox): Int = value
