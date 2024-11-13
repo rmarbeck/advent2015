@@ -5,6 +5,15 @@ val loggerAOC: Logger = Logger("aoc")
 val loggerAOCPart1: Logger = Logger("aoc.part1")
 val loggerAOCPart2: Logger = Logger("aoc.part2")
 
+/**
+ *
+ * #Interesting
+ *
+ * Using function litteral and implicit (context param) through use of ?=> syntax
+ *
+ * Even if function is typed to need implicit, a function without implicit in signature type checks (use for result1)
+ *
+ */
 @main def hello(): Unit =
   loggerAOC.trace("Root trace activated")
   loggerAOC.debug("Root debug activated")
@@ -19,18 +28,12 @@ val loggerAOCPart2: Logger = Logger("aoc.part2")
 object Solver:
   private def runOn(inputLines: Seq[String]): (String, String) =
 
-    val builder = buildAndRead(inputLines)
+    val populateFromInput = populateAndRead(inputLines)
 
-    val resultPart1 = builder(identity)
+    val result1 = populateFromInput(())
 
-    val resultPart2 = builder:
-      _.map:
-        case Simple(name, _) if name == "b" => Simple(name, resultPart1.toString)
-        case value => value
-
-    val result1 = s"$resultPart1"
-
-    val result2 = s"$resultPart2"
+    val result2 = populateFromInput:
+      summon[WireBox].addOrChange(Simple("b", result1.toString))
 
     (s"$result1", s"$result2")
 
@@ -46,18 +49,13 @@ object Solver:
       case _ => runOn(lines)
 end Solver
 
-def buildAndRead(inputLines: Seq[String])(amendingFunction: Seq[Wire] => WireBox ?=> Seq[Wire]): Int =
-  given WireBox = new WireBox()
+def populateAndRead(inputLines: Seq[String])(updateWiresFunction: WireBox ?=> Unit): Int =
+  given box: WireBox = new WireBox()
+  populateBox(inputLines)
+  updateWiresFunction.apply
+  box.getWire("a").unSignedValue
 
-  val wires = populateWiresInBox(inputLines)
-
-  val amendedWires = amendingFunction(wires)
-
-  summon[WireBox].addWires(amendedWires)
-
-  summon[WireBox].getWire("a").unSignedValue
-
-def populateWiresInBox(inputLines: Seq[String])(using WireBox): Seq[Wire] =
+def populateBox(inputLines: Seq[String])(using WireBox): Unit =
   inputLines.map:
     case s"$left AND $right -> $name" => BitWiseAnd(name, left, right)
     case s"$left OR $right -> $name" => BitWiseOr(name, left, right)
@@ -65,12 +63,12 @@ def populateWiresInBox(inputLines: Seq[String])(using WireBox): Seq[Wire] =
     case s"$left RSHIFT $right -> $name" => RightShift(name, left, right.toInt)
     case s"NOT $right -> $name" => NOT(name, right)
     case s"$value -> $name" => Simple(name, value)
+  .foreach(summon[WireBox].addOrChange)
 
 class WireBox:
   private var wireList: Map[String, Wire] = Map()
 
-  def addWires(wires: Seq[Wire]): Unit =
-    wireList = wireList ++ wires.map(current => current.name -> current).toMap
+  def addOrChange(wire: Wire): Unit = wireList = wireList + (wire.name -> wire)
 
   def getWire(name: String): Wire = wireList.get(name) match
     case Some(value) => value
@@ -80,10 +78,9 @@ trait Wire(val name: String):
   def unSignedValue(using WireBox): Int = value
   def value: Int
   def getValue(nameOrValue: String)(using wirebox: WireBox): Int =
-    val result = nameOrValue.toIntOption match
+    nameOrValue.toIntOption match
       case Some(valueAsInt) => valueAsInt
       case None => wirebox.getWire(nameOrValue).value
-    result
 
 case class Simple(simpleName: String, other: String)(using WireBox) extends Wire(simpleName):
   lazy val value: Int = getValue(other)
